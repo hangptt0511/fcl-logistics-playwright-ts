@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FCL Logistics: kiểm thử tự động</title>
+<style>
+  :root {
+    --bg: #F2F4F3;
+    --ink: #16232B;
+    --muted: #52626B;
+    --line: #C9D1D3;
+    --link: #1D4E69;
+    --band-a: #1D4E69;
+    --band-b: #245C7B;
+    --amber: #D9961A;
+    --head: "Bahnschrift", "DIN Alternate", "Avenir Next Condensed", "Arial Narrow", system-ui, sans-serif;
+    --body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0F1A20;
+      --ink: #E6ECEE;
+      --muted: #9AAAB2;
+      --line: #2B3C45;
+      --link: #7DBEE0;
+      --amber: #E2A62E;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 1rem/1.6 var(--body);
+  }
+  .band {
+    height: 14px;
+    background: repeating-linear-gradient(90deg, var(--band-a) 0 7px, var(--band-b) 7px 14px);
+  }
+  main { max-width: 46rem; margin: 0 auto; padding: 2.5rem 1.25rem 3rem; }
+  h1, h2, h3 { font-family: var(--head); line-height: 1.15; margin: 0; }
+  h1 { font-size: clamp(2rem, 6vw, 2.8rem); letter-spacing: -0.01em; }
+  h2 {
+    font-size: 1.35rem;
+    margin-top: 2.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+  }
+  h3 { font-size: 1.1rem; }
+  p { margin: 0.6rem 0 0; max-width: 62ch; }
+  .lead { margin-top: 1rem; font-size: 1.1rem; }
+  .muted { color: var(--muted); }
+  a { color: var(--link); text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
+  a:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; border-radius: 2px; }
+
+  /* Luồng nghiệp vụ: một chuỗi bước nên vẽ như tuyến đường */
+  .route { list-style: none; margin: 1.5rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); }
+  .route li { position: relative; padding: 1.5rem 0.9rem 0 0; }
+  .route li::before {
+    content: ""; position: absolute; top: 0.3rem; left: 0;
+    width: 0.9rem; height: 0.9rem; border-radius: 50%;
+    background: var(--amber); box-shadow: 0 0 0 3px var(--bg);
+  }
+  .route li::after {
+    content: ""; position: absolute; top: calc(0.75rem - 1px); left: 1rem; right: 0.1rem;
+    height: 2px; background: var(--line);
+  }
+  .route li:last-child::after { display: none; }
+  .route strong { display: block; font-family: var(--head); font-size: 1.05rem; }
+  .route .en { display: block; font-size: 0.85rem; color: var(--muted); }
+  .route .what { display: block; margin-top: 0.35rem; font-size: 0.9rem; line-height: 1.45; }
+
+  /* Danh sách báo cáo */
+  .reports { list-style: none; margin: 1.25rem 0 0; padding: 0; }
+  .reports li {
+    display: grid; grid-template-columns: 3.6rem 1fr; gap: 1rem;
+    padding: 1.1rem 0; border-top: 1px solid var(--line);
+  }
+  .reports li:first-child { border-top: 0; padding-top: 0.25rem; }
+  .tag {
+    align-self: start; text-align: center;
+    font: 700 0.85rem/1 var(--head);
+    padding: 0.4rem 0; border: 2px solid var(--link); color: var(--link); border-radius: 3px;
+  }
+  .reports h3 a { color: inherit; text-decoration-color: var(--amber); text-decoration-thickness: 2px; }
+  .reports p { margin-top: 0.3rem; font-size: 0.95rem; color: var(--muted); }
+
+  .docs { margin: 1rem 0 0; padding-left: 1.1rem; }
+  .docs li { margin-top: 0.4rem; }
+
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); font-size: 0.9rem; color: var(--muted); }
+
+  @media (max-width: 620px) {
+    .route { grid-template-columns: 1fr; }
+    .route li { padding: 0 0 1.3rem 1.8rem; }
+    .route li::before { top: 0.2rem; }
+    .route li::after { top: 1.2rem; bottom: 0; left: calc(0.45rem - 1px); right: auto; width: 2px; height: auto; }
+    .reports li { grid-template-columns: 1fr; gap: 0.5rem; }
+    .tag { justify-self: start; padding: 0.35rem 0.7rem; }
+  }
+</style>
+</head>
+<body>
+<div class="band" aria-hidden="true"></div>
+<main>
+  <header>
+    <h1>FCL Logistics: kiểm thử tự động</h1>
+    <p class="lead">Dự án tự học về kiểm thử phần mềm, thực hiện trên một hệ thống quản lý vận tải container nguyên (FCL). Gồm kiểm thử API, giao diện và luồng xuyên suốt, viết bằng Playwright và TypeScript.</p>
+    <p class="muted">Trang này tập hợp báo cáo chạy test, tài liệu test case và mã nguồn. Framework dùng Page Object Model, data-driven testing và kiến trúc phân tầng Core, Service, Assertion cho phần API.</p>
+  </header>
+
+  <h2>Nghiệp vụ được kiểm thử</h2>
+  <p>Giá mua cước từ nhà cung cấp được duyệt, dùng để lập bảng phân tích giá bán, trở thành bảng giá cho khách và cuối cùng sinh ra đơn đặt hàng.</p>
+  <ol class="route">
+    <li>
+      <strong>Giá mua</strong><span class="en">FCL Buying</span>
+      <span class="what">Giá nhà cung cấp báo, qua bước gửi và duyệt</span>
+    </li>
+    <li>
+      <strong>Bảng phân tích</strong><span class="en">FCL Quotation</span>
+      <span class="what">Tính giá bán và lợi nhuận</span>
+    </li>
+    <li>
+      <strong>Bảng giá</strong><span class="en">FCL Rate Card</span>
+      <span class="what">Giá áp dụng cho khách, cần duyệt</span>
+    </li>
+    <li>
+      <strong>Đơn đặt hàng</strong><span class="en">FCL Booking</span>
+      <span class="what">Sinh ra khi chuyển đổi từ bảng giá</span>
+    </li>
+  </ol>
+
+  <h2>Báo cáo kiểm thử</h2>
+  <p>Mỗi báo cáo là báo cáo HTML của Playwright: kết quả từng test, các bước thực hiện và dữ liệu đính kèm.</p>
+  <ul class="reports">
+    <li>
+      <span class="tag">API</span>
+      <div>
+        <h3><a href="price-fcl-buying-api/">Price FCL Buying API Tests</a></h3>
+        <p>Tạo giá mua FCL qua API: dữ liệu hợp lệ, thiếu trường bắt buộc, sai kiểu dữ liệu, giá trị không hợp lệ và trùng bản ghi.</p>
+      </div>
+    </li>
+    <li>
+      <span class="tag">API</span>
+      <div>
+        <h3><a href="price-toll-buying-api/">Price Toll Buying API Tests</a></h3>
+        <p>Tạo giá vé cầu đường qua API: dữ liệu hợp lệ, thiếu trường bắt buộc, định dạng sai, mã tham chiếu không tồn tại và trùng bản ghi.</p>
+      </div>
+    </li>
+    <li>
+      <span class="tag">UI</span>
+      <div>
+        <h3><a href="fcl-booking-ui/">FCL Booking UI Tests</a></h3>
+        <p>Tạo đơn đặt hàng trên giao diện: lưu thành công, báo lỗi trường bắt buộc và quy tắc ngày giờ, đối chiếu dữ liệu ở danh sách, chi tiết và form sửa.</p>
+      </div>
+    </li>
+    <li>
+      <span class="tag">E2E</span>
+      <div>
+        <h3><a href="convert-booking-e2e/">Convert Booking From Price Buying FCL E2E Tests</a></h3>
+        <p>Luồng xuyên suốt từ giá mua đã duyệt, qua bảng phân tích và bảng giá, đến đơn đặt hàng.</p>
+      </div>
+    </li>
+  </ul>
+
+  <h2>Tài liệu test case</h2>
+  <p>Test case thủ công cho chức năng Giá mua FCL (FCL Buying), gồm nghiệp vụ, scenario, checklist, test case và bug report.</p>
+  <ul class="docs">
+    <li><a href="fcl-buying-test-case.pdf">Xem bản PDF</a> để đọc nhanh.</li>
+    <li><a href="fcl-buying-test-case.xlsx" download>Tải bản Excel</a> để xem đầy đủ.</li>
+  </ul>
+
+  <h2>Mã nguồn</h2>
+  <p>Toàn bộ code framework, dữ liệu test và hướng dẫn chạy nằm trên GitHub: <a href="https://github.com/TEN-GITHUB/fcl-logistics-playwright-ts">fcl-logistics-playwright-ts</a>.</p>
+
+  <footer>
+    [Họ và tên] &nbsp; [Email]
+  </footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# Environment variables
+.env
+
+# Authentication state & session
+playwright/.auth/
+
+# Local test results & reports
+playwright-report/
+site/
+node_modules/
+reports/
+src/api/core/endpoints.ts
+test-results/
